@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hasher-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hasher
+      app: dockercoins
+  template:
+    metadata:
+      labels:
+        app: hasher
+        app: dockercoins
+    spec:
+      containers:
+        -
+          args:
+            - hasher.rb
+          command:
+            - ruby
+          image: celsohernando/hasher:latest
+          name: hasher-container
+          ports: 
+            - 
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            -
+              mountPath: /hasher/hasher.rb
+              name: hasher-volume
+              readonly: true
+              subPath: hasher.rb
+          workingDir: /hasher/   
+      volumes:
+        -
+          secret:
+            defaultMode: 0400
+            items:
+              -
+                key: hasher.rb
+                mode: 0400
+                path: hasher.rb
+            secretName: hasher-secret
+          name: hasher-volume
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      app: dockercoins
+  template:
+    metadata:
+      labels:
+        app: redis
+        app: dockercoins
+    spec:
+      containers:
+        -
+          args:
+            - redis-server
+          command:
+            - docker-entrypoint.sh
+          image: celsohernando/redis:latest
+          name: redis-container
+          ports: 
+            - 
+              containerPort: 6379
+              protocol: TCP
+          volumeMounts:
+            -
+              mountPath: /data/
+              name: redis-volume
+              readonly: false
+          workingDir: /data/   
+      volumes:
+        -
+          emptyDir:
+            medium: Memory
+            sizeLimit: 100Mi
+          name: redis-volume
+---
