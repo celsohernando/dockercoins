@@ -30,7 +30,7 @@ spec:
             -
               mountPath: /hasher/hasher.rb
               name: hasher-volume
-              readonly: true
+              readOnly: true
               subPath: hasher.rb
           workingDir: /hasher/   
       volumes:
@@ -77,7 +77,7 @@ spec:
             -
               mountPath: /data/
               name: redis-volume
-              readonly: false
+              readOnly: false
           workingDir: /data/   
       volumes:
         -
@@ -117,7 +117,7 @@ spec:
             -
               mountPath: /rng/rng.py
               name: rng-volume
-              readonly: true
+              readOnly: true
               subPath: rng.py
           workingDir: /rng/   
       volumes:
@@ -162,15 +162,10 @@ spec:
               protocol: TCP
           volumeMounts:
             -
-              mountPath: /webui/files/
-              name: webui-files-volume
-              readonly: true
-            -
-              mountPath: /webui/webui.js
+              mountPath: /dockercoins/
               name: webui-volume
-              readonly: true
-              subPath: webui.js
-          workingDir: /webui/   
+              readOnly: true
+          workingDir: /dockercoins/webui/   
       initContainers:
         -
           args:
@@ -185,23 +180,57 @@ spec:
           volumeMounts:
             -
               mountPath: /dockercoins/
-              name: webui-files-volume
-              readonly: false
+              name: webui-volume
+              readOnly: false
           workingDir: /dockercoins/   
       volumes:
         -
           persistentVolumeClaim:
-            claimName: webui-files-pvc
+            claimName: webui-pvc
             readOnly: false
-          name: webui-files-volume
+          name: webui-volume
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+      app: dockercoins
+  template:
+    metadata:
+      labels:
+        app: worker
+        app: dockercoins
+    spec:
+      containers:
+        -
+          args:
+            - worker.py
+          command:
+            - python
+          image: celsohernando/worker:latest
+          name: worker-container
+          volumeMounts:
+            -
+              mountPath: /worker/worker.py
+              name: worker-volume
+              readOnly: true
+              subPath: worker.py
+          workingDir: /worker/   
+      volumes:
         -
           secret:
             defaultMode: 0400
             items:
               -
-                key: webui.js
+                key: worker.py
                 mode: 0400
-                path: webui.js
-            secretName: webui-secret
-          name: webui-volume
+                path: worker.py
+            secretName: worker-secret
+          name: worker-volume
 ---
+
