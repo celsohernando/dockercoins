@@ -233,4 +233,66 @@ spec:
             secretName: worker-secret
           name: worker-volume
 ---
+apiVersion: v1
+Kind: Service
+metadata:
+  name: hasher
+spec:
+  ports:
+    -
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: hasher
+    app: dockercoins
+  type: ClusterIP
+
+---
+apiVersion: v1
+Kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+    -
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app: redis
+    app: dockercoins
+  type: ClusterIP
+---
+apiVersion: v1
+Kind: Service
+metadata:
+  name: rng
+spec:
+  ports:
+    -
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: rng
+    app: dockercoins
+  type: ClusterIP
+---
+apiVersion: v1
+Kind: Service
+metadata:
+  name: webui
+spec:
+  ports:
+    -
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: webui
+    app: dockercoins
+  type: ClusterIP
+
+
 
