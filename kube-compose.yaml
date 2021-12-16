@@ -86,3 +86,122 @@ spec:
             sizeLimit: 100Mi
           name: redis-volume
 ---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: rng-ds
+spec:
+  selector:
+    matchLabels:
+      app: rng
+      app: dockercoins
+  template:
+    metadata:
+      labels:
+        app: rng
+        app: dockercoins
+    spec:
+      containers:
+        -
+          args:
+            - rng.py
+          command:
+            - python
+          image: celsohernando/rng:latest
+          name: rng-container
+          ports: 
+            - 
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            -
+              mountPath: /rng/rng.py
+              name: rng-volume
+              readonly: true
+              subPath: rng.py
+          workingDir: /rng/   
+      volumes:
+        -
+          secret:
+            defaultMode: 0400
+            items:
+              -
+                key: rng.py
+                mode: 0400
+                path: rng.py
+            secretName: rng-secret
+          name: rng-volume
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webui-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webui
+      app: dockercoins
+  template:
+    metadata:
+      labels:
+        app: webui
+        app: dockercoins
+    spec:
+      containers:
+        -
+          args:
+            - webui.js
+          command:
+            - node
+          image: celsohernando/webui:latest
+          name: webui-container
+          ports: 
+            - 
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            -
+              mountPath: /webui/files/
+              name: webui-files-volume
+              readonly: true
+            -
+              mountPath: /webui/webui.js
+              name: webui-volume
+              readonly: true
+              subPath: webui.js
+          workingDir: /webui/   
+      initContainers:
+        -
+          args:
+            - clone
+            - https://github.com/celsohernando/dockercoins
+            - --branch
+            - 2021-12-ibm
+            - --single-branch
+            - /dockercoins/
+          image: celsohernando/git:latest
+          name: webui-init-container
+          volumeMounts:
+            -
+              mountPath: /dockercoins/
+              name: webui-files-volume
+              readonly: false
+          workingDir: /dockercoins/   
+      volumes:
+        -
+          persistentVolumeClaim:
+            claimName: webui-files-pvc
+            readOnly: false
+          name: webui-files-volume
+        -
+          secret:
+            defaultMode: 0400
+            items:
+              -
+                key: webui.js
+                mode: 0400
+                path: webui.js
+            secretName: webui-secret
+          name: webui-volume
+---
